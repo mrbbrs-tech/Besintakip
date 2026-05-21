@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Kalori Takip</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0e0e14;--s1:#14141e;--s2:#1a1a28;--brd:#22223a;--acc:#c8ff00;--text:#f0ede6;--mut:#5a5a7a;--mono:'DM Mono',monospace}
+body{background:var(--bg)}
+.app{min-height:100vh;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);padding-bottom:80px}
+.strip{background:var(--s1);border-bottom:1px solid var(--brd);padding:12px 14px;display:flex;align-items:center;gap:12px}
+.ring-wrap{position:relative;width:68px;height:68px;flex-shrink:0}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-kcal{font-family:'Bebas Neue',sans-serif;font-size:19px;color:var(--acc);line-height:1}
+.ring-lbl{font-family:var(--mono);font-size:7px;color:var(--mut);letter-spacing:1px}
+.mbars{flex:1;display:flex;flex-direction:column;gap:6px}
+.mrow{display:flex;align-items:center;gap:7px}
+.mlbl{font-family:var(--mono);font-size:9px;color:var(--mut);width:22px;text-transform:uppercase}
+.mtrack{flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden}
+.mfill{height:100%;border-radius:2px;transition:width .5s}
+.mval{font-family:var(--mono);font-size:9px;width:50px;text-align:right}
+.strip-btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.strip-btn{background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:border-color .15s}
+.strip-btn:active{border-color:var(--acc)}
+.target-sheet{background:var(--s1);border-radius:20px 20px 0 0;width:100%;padding:20px;animation:su .22s cubic-bezier(.4,0,.2,1)}
+.ts-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--acc);margin-bottom:4px}
+.ts-sub{font-family:var(--mono);font-size:10px;color:var(--mut);margin-bottom:18px}
+.ts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ts-field{display:flex;flex-direction:column;gap:5px}
+.ts-label{font-family:var(--mono);font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.ts-input{background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--acc);font-family:'Bebas Neue',sans-serif;font-size:22px;text-align:center;padding:8px;outline:none;letter-spacing:1px;width:100%}
+.ts-input:focus{border-color:var(--acc)}
+.ts-save{width:100%;padding:13px;background:var(--acc);color:#0e0e14;border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;margin-bottom:8px}
+.ts-save:active{opacity:.85}
+.ts-cancel{width:100%;padding:9px;background:transparent;border:none;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--brd)}
+.tab{flex:1;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--mut);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;font-size:9px;font-weight:600;letter-spacing:.3px;text-align:center;line-height:1.5}
+.tab.on{color:var(--acc);border-color:var(--acc)}
+.tab-kcal{font-family:var(--mono);font-size:8px}
+.sec{padding:14px}
+.meal-summary{background:var(--s2);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.ms-kcal{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--acc)}
+.ms-label{font-family:var(--mono);font-size:9px;color:var(--mut)}
+.ms-macros{display:flex;gap:10px}
+.ms-m{text-align:center}
+.ms-v{font-family:var(--mono);font-size:11px;font-weight:500}
+.ms-l{font-family:var(--mono);font-size:8px;color:var(--mut);text-transform:uppercase}
+.added-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.added-row{display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:10px;padding:9px 12px}
+.added-emoji{font-size:16px;flex-shrink:0}
+.added-info{flex:1;min-width:0}
+.added-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.added-sub{font-family:var(--mono);font-size:9px;color:var(--mut);margin-top:2px}
+.added-kal{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--acc);flex-shrink:0}
+.del-btn{background:none;border:none;color:var(--mut);font-size:17px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0}
+.del-btn:active{color:#ff6b6b}
+.empty{font-family:var(--mono);font-size:11px;color:var(--mut);padding:6px 2px 12px;text-align:center}
+.qa-label{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;margin-top:4px}
+.cat-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}
+.cat-row::-webkit-scrollbar{display:none}
+.cat-chip{padding:4px 12px;border-radius:20px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
+.cat-chip.on{background:var(--acc);color:#0e0e14;border-color:var(--acc)}
+.food-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.food-btn{background:var(--s1);border:1px solid var(--brd);border-radius:12px;padding:10px 11px;cursor:pointer;text-align:left;transition:border-color .15s;display:flex;align-items:center;gap:9px}
+.food-btn:active{border-color:var(--acc)}
+.fb-emoji{font-size:18px;flex-shrink:0}
+.fb-info{flex:1;min-width:0}
+.fb-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fb-kal{font-family:var(--mono);font-size:10px;color:var(--acc);margin-top:1px}
+.fb-unit{font-family:var(--mono);font-size:9px;color:var(--mut)}
+.fb-var{font-family:var(--mono);font-size:9px;color:#5ba3ff}
+.act-total{background:var(--s2);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.at-v{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#ff6b6b}
+.at-l{font-family:var(--mono);font-size:9px;color:var(--mut);letter-spacing:.5px}
+.act-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.act-card{background:var(--s1);border:1px solid var(--brd);border-radius:14px;padding:14px 16px}
+.act-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.act-emoji{font-size:22px}
+.act-name{font-size:14px;font-weight:700}
+.act-note{font-family:var(--mono);font-size:9px;color:var(--mut);margin-top:2px}
+.act-row{display:flex;align-items:center;gap:10px}
+.act-btn{width:36px;height:36px;border-radius:10px;background:var(--s2);border:none;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.act-btn:active{background:var(--acc);color:#0e0e14}
+.act-input{flex:1;background:var(--bg);border:1px solid var(--brd);border-radius:8px;color:var(--acc);font-family:'Bebas Neue',sans-serif;font-size:26px;text-align:center;padding:6px;outline:none;letter-spacing:1px}
+.act-unit{font-family:var(--mono);font-size:11px;color:var(--mut);min-width:28px;text-align:center}
+.act-burn{font-family:'Bebas Neue',sans-serif;font-size:13px;color:#ff6b6b;margin-top:8px;text-align:right;letter-spacing:1px}
+.add-custom-btn{width:100%;padding:11px;background:transparent;border:1px dashed var(--brd);border-radius:12px;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:8px}
+.add-custom-btn:active{border-color:var(--acc);color:var(--acc)}
+.custom-form{background:var(--s1);border:1px solid #5ba3ff44;border-radius:14px;padding:16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px}
+.cf-title{font-family:var(--mono);font-size:10px;color:#5ba3ff;letter-spacing:1px;text-transform:uppercase}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cf-input{background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;outline:none;width:100%}
+.cf-input:focus{border-color:#5ba3ff}
+.cf-input::placeholder{color:var(--mut)}
+.cf-save{padding:11px;background:#5ba3ff;color:#0e0e14;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer}
+.cf-save:active{opacity:.85}
+.cf-cancel{padding:8px;background:transparent;border:none;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;text-align:center}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;animation:fi .15s}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.sheet{background:var(--s1);border-radius:20px 20px 0 0;width:100%;padding:20px;animation:su .22s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto}
+@keyframes su{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sh-handle{width:36px;height:4px;background:var(--brd);border-radius:2px;margin:0 auto 18px}
+.sh-food{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sh-emoji{font-size:26px}
+.sh-name{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:1px;color:var(--text)}
+.sh-note{font-family:var(--mono);font-size:10px;color:var(--mut);margin-top:2px}
+.variant-row{display:flex;gap:8px;margin-bottom:14px}
+.var-btn{flex:1;padding:8px;border-radius:10px;border:1px solid var(--brd);background:transparent;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center}
+.var-btn.on{background:var(--s2);border-color:#5ba3ff;color:#5ba3ff}
+.amt-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.amt-btn{width:44px;height:44px;border-radius:12px;background:var(--s2);border:none;color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.amt-btn:active{background:var(--acc);color:#0e0e14}
+.amt-val{flex:1;background:var(--bg);border:1px solid var(--brd);border-radius:10px;color:var(--acc);font-family:'Bebas Neue',sans-serif;font-size:30px;text-align:center;padding:8px;outline:none;letter-spacing:2px}
+.amt-unit{font-family:var(--mono);font-size:12px;color:var(--mut);width:40px;text-align:center}
+.prev-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.prev-box{background:var(--s2);border-radius:10px;padding:10px;text-align:center}
+.prev-v{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--acc)}
+.prev-l{font-family:var(--mono);font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.sh-add{width:100%;padding:14px;background:var(--acc);color:#0e0e14;border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer}
+.sh-add:active{opacity:.85}
+.ref-list{display:flex;flex-direction:column;gap:8px;padding:14px}
+.ref-card{background:var(--s1);border:1px solid var(--brd);border-radius:14px;overflow:hidden}
+.ref-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
+.ref-left{display:flex;align-items:center;gap:10px}
+.ref-emoji{font-size:20px}
+.ref-name{font-size:14px;font-weight:700}
+.ref-unit{font-family:var(--mono);font-size:9px;color:var(--mut);margin-top:1px}
+.ref-kcal{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--acc)}
+.ref-bar{height:4px;margin:0 14px 8px;border-radius:2px;overflow:hidden}
+.ref-detail{padding:10px 14px;background:var(--s2);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rd-box{background:var(--bg);border-radius:8px;padding:8px;text-align:center}
+.rd-v{font-family:'Bebas Neue',sans-serif;font-size:18px}
+.rd-l{font-family:var(--mono);font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.ref-note{padding:6px 14px 10px;font-family:var(--mono);font-size:10px;color:var(--mut)}
+.divider{height:1px;background:var(--brd)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--acc);color:#0e0e14;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:10px 20px;border-radius:20px;z-index:300;animation:toastIn .2s ease;white-space:nowrap;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const INIT_TARGET = { kal: 1900, pro: 115, karb: 110, yag: 60 };
+
+const DEFAULT_FOODS = [
+  { name: "Yumurta", emoji: "🥚", unit: "adet", step: 1, base: 1, kal: 70, pro: 6, karb: 0.5, yag: 5, cat: "protein", note: "1 orta boy ≈ 50g" },
+  { name: "Tavuk Göğsü", emoji: "🍗", cat: "protein", variants: {
+    cig:    { kal: 120, pro: 23,  karb: 0, yag: 2.7, unit: "g", step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 165, pro: 31,  karb: 0, yag: 3.6, unit: "g", step: 25, base: 100, note: "Pişmiş, 100g" }
+  }},
+  { name: "Ton Balığı", emoji: "🐟", unit: "g", step: 25, base: 100, kal: 116, pro: 26, karb: 0, yag: 1, cat: "protein", note: "Suda konserve, 50g ile başlar" },
+  { name: "Dana Kıyma", emoji: "🥩", cat: "protein", variants: {
+    cig:    { kal: 215, pro: 20, karb: 0, yag: 15, unit: "g", step: 25, base: 100, note: "Çiğ %10 yağlı, 100g" },
+    pismis: { kal: 196, pro: 26, karb: 0, yag: 10, unit: "g", step: 25, base: 100, note: "Pişmiş %10 yağlı, 100g" }
+  }},
+  { name: "Hindi Göğsü", emoji: "🦃", cat: "protein", variants: {
+    cig:    { kal: 112, pro: 24, karb: 0, yag: 1.5, unit: "g", step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 135, pro: 29, karb: 0, yag: 2,   unit: "g", step: 25, base: 100, note: "Pişmiş, 100g" }
+  }},
+  { name: "Protein Tozu", emoji: "🥤", unit: "servis", step: 1, base: 1, kal: 86, pro: 18.8, karb: 1.5, yag: 0.3, cat: "protein", note: "1 servis = 25g" },
+  { name: "Süzme Yoğurt", emoji: "🥛", unit: "g", step: 50, base: 100, kal: 57, pro: 10, karb: 4, yag: 0, cat: "süt", note: "Yağsız, 100g" },
+  { name: "Yoğurt (Tam)", emoji: "🥛", unit: "g", step: 50, base: 100, kal: 70, pro: 4, karb: 5, yag: 4, cat: "süt", note: "Tam yağlı, 100g" },
+  { name: "Lor Peyniri", emoji: "🧀", unit: "g", step: 25, base: 100, kal: 74, pro: 14, karb: 3, yag: 1, cat: "süt", note: "100g" },
+  { name: "Kepek Ekmek", emoji: "🍞", unit: "dilim", step: 1, base: 1, kal: 65, pro: 3, karb: 12, yag: 1, cat: "karb", note: "1 dilim ≈ 30g" },
+  { name: "Protein Ekmek", emoji: "💪", unit: "dilim", step: 1, base: 1, kal: 116, pro: 10.6, karb: 6.3, yag: 4.3, cat: "karb", note: "Mestemacher, 1 dilim = 50g" },
+  { name: "Pirinç", emoji: "🍚", cat: "karb", variants: {
+    cig:    { kal: 365, pro: 7,   karb: 80,  yag: 0.7, unit: "g",     step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 35,  pro: 0.6, karb: 7.5, yag: 0.5, unit: "kaşık", step: 1,  base: 1,   note: "Pişmiş yağlı pilav, 1 kaşık" }
+  }},
+  { name: "Bulgur", emoji: "🌾", cat: "karb", variants: {
+    cig:    { kal: 342, pro: 12,  karb: 76,  yag: 1.3, unit: "g",     step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 32,  pro: 0.8, karb: 6.2, yag: 0.6, unit: "kaşık", step: 1,  base: 1,   note: "Pişmiş yağlı bulgur, 1 kaşık" }
+  }},
+  { name: "Yulaf", emoji: "🥣", cat: "karb", variants: {
+    cig:    { kal: 389, pro: 17,  karb: 66, yag: 7,   unit: "g",     step: 10, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 35,  pro: 1.5, karb: 6,  yag: 0.6, unit: "kaşık", step: 1,  base: 1,   note: "Pişmiş, 1 kaşık" }
+  }},
+  { name: "Makarna", emoji: "🍝", unit: "kaşık", step: 1, base: 1, kal: 35, pro: 1.1, karb: 7.2, yag: 0.4, cat: "karb", note: "Soslu/yağlı pişmiş, 1 kaşık" },
+  { name: "Nohut", emoji: "🫘", cat: "baklagil", variants: {
+    cig:    { kal: 364, pro: 19,  karb: 61, yag: 6,   unit: "g", step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 164, pro: 8.9, karb: 27, yag: 2.6, unit: "g", step: 25, base: 100, note: "Pişmiş, 100g" }
+  }},
+  { name: "Yeşil Mercimek", emoji: "🟢", cat: "baklagil", variants: {
+    cig:    { kal: 352, pro: 24, karb: 60, yag: 1.1, unit: "g", step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 116, pro: 9,  karb: 20, yag: 0.4, unit: "g", step: 25, base: 100, note: "Pişmiş, 100g" }
+  }},
+  { name: "Kuru Fasulye", emoji: "🫘", cat: "baklagil", variants: {
+    cig:    { kal: 333, pro: 21,  karb: 60, yag: 0.8, unit: "g", step: 25, base: 100, note: "Çiğ, 100g" },
+    pismis: { kal: 127, pro: 8.7, karb: 22, yag: 0.5, unit: "g", step: 25, base: 100, note: "Pişmiş, 100g" }
+  }},
+  { name: "Karışık Salata", emoji: "🥗", unit: "g", step: 50, base: 100, kal: 20, pro: 1.5, karb: 3, yag: 0.3, cat: "sebze", note: "Marul, domates, salatalık, roka 100g" },
+  { name: "Brokoli", emoji: "🥦", unit: "g", step: 50, base: 100, kal: 34, pro: 2.8, karb: 7, yag: 0.4, cat: "sebze", note: "100g" },
+  { name: "Muz", emoji: "🍌", unit: "adet", step: 1, base: 1, kal: 89, pro: 1.1, karb: 23, yag: 0.3, cat: "meyve", note: "1 orta boy ≈ 100g" },
+  { name: "Elma", emoji: "🍎", unit: "adet", step: 1, base: 1, kal: 72, pro: 0.4, karb: 19, yag: 0.2, cat: "meyve", note: "1 orta boy" },
+  { name: "Zeytinyağı", emoji: "🫒", unit: "kaşık", step: 1, base: 1, kal: 119, pro: 0, karb: 0, yag: 14, cat: "yağ", note: "1 yemek kaşığı ≈ 13g" },
+];
+
+const ACTIVITIES = [
+  { name: "Yürüyüş Bandı",        emoji: "🏃", unit: "dk", perUnit: 6,   note: "Dk başına ~6 kcal" },
+  { name: "Bisiklet",             emoji: "🚴", unit: "dk", perUnit: 7.5, note: "Dk başına ~7.5 kcal" },
+  { name: "Full Body Antrenman",  emoji: "🏋️", unit: "dk", perUnit: 7,   note: "Dk başına ~7 kcal" },
+  { name: "Fonksiyonel Antrenman",emoji: "🦾", unit: "dk", perUnit: 8.5, note: "Dk başına ~8.5 kcal" },
+];
+
+const CATS = ["hepsi","protein","karb","baklagil","süt","sebze","meyve","yağ","özel"];
+const MEALS = ["☀️ Sabah","🌤️ Öğle","🌙 Akşam"];
+const MEAL_NAMES = ["Sabah","Öğle","Akşam"];
+
+function resolveFood(food, variant) {
+  if (!food.variants) return food;
+  return { ...food, ...(food.variants[variant] || food.variants.pismis) };
+}
+function calc(food, amt) {
+  const ratio = food.unit === "g" ? amt / food.base : amt;
+  return {
+    kal:  Math.round(food.kal  * ratio),
+    pro:  Math.round(food.pro  * ratio * 10) / 10,
+    karb: Math.round(food.karb * ratio * 10) / 10,
+    yag:  Math.round(food.yag  * ratio * 10) / 10,
+  };
+}
+function mealTotals(items) {
+  return items.reduce((a, e) => {
+    const n = calc(e.food, e.amt);
+    return { kal: a.kal+n.kal, pro: a.pro+n.pro, karb: a.karb+n.karb, yag: a.yag+n.yag };
+  }, { kal:0, pro:0, karb:0, yag:0 });
+}
+
+function App() {
+  const [target, setTarget] = useState(INIT_TARGET);
+  const [tab, setTab] = useState(0);
+  const [entries, setEntries] = useState({0:[],1:[],2:[]});
+  const [actAmts, setActAmts] = useState({0:0,1:0,2:0,3:0});
+  const [sheet, setSheet] = useState(null);
+  const [amt, setAmt] = useState(1);
+  const [cat, setCat] = useState("hepsi");
+  const [openRef, setOpenRef] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [customFoods, setCustomFoods] = useState([]);
+  const [showCustomForm, setShowCustomForm] = useState(false);
+  const [cf, setCf] = useState({name:"",emoji:"🍽️",kal:"",pro:"",karb:"",yag:"",unit:"g"});
+  const [showTargetSheet, setShowTargetSheet] = useState(false);
+  const [editTarget, setEditTarget] = useState({...INIT_TARGET});
+
+  const allFoods = [...DEFAULT_FOODS, ...customFoods];
+  const allEntries = Object.values(entries).flat();
+  const foodTotals = allEntries.reduce((a,e) => {
+    const n = calc(e.food, e.amt);
+    return {kal:a.kal+n.kal,pro:a.pro+n.pro,karb:a.karb+n.karb,yag:a.yag+n.yag};
+  }, {kal:0,pro:0,karb:0,yag:0});
+  const totalBurn = Object.entries(actAmts).reduce((s,[i,v]) => s + Math.round(ACTIVITIES[i].perUnit*v), 0);
+  const netKal = foodTotals.kal - totalBurn;
+  const calPct = Math.min(100, Math.max(0, (netKal/target.kal)*100));
+  const R=27, CIRC=2*Math.PI*R;
+
+  function openSheet(rawFood) {
+    const initV = rawFood.variants ? "pismis" : null;
+    const food = resolveFood(rawFood, initV);
+    setSheet({rawFood, variant:initV, food});
+    if (rawFood.name === "Ton Balığı") { setAmt(50); return; }
+    setAmt(food.unit==="g" ? food.step*4 : food.base);
+  }
+  function switchVariant(v) {
+    const food = resolveFood(sheet.rawFood, v);
+    setSheet(s => ({...s, variant:v, food}));
+    setAmt(food.unit==="g" ? food.step*4 : food.base);
+  }
+  function addEntry() {
+    if (!sheet) return;
+    setEntries(prev => ({...prev, [tab]:[...prev[tab],{food:sheet.food,amt,id:Date.now(),variantLabel:sheet.variant}]}));
+    setSheet(null);
+  }
+  function removeEntry(mealIdx, id) {
+    setEntries(prev => ({...prev, [mealIdx]:prev[mealIdx].filter(e=>e.id!==id)}));
+  }
+  function saveCustomFood() {
+    if (!cf.name || !cf.kal) return;
+    const food = {
+      name:cf.name, emoji:cf.emoji||"🍽️", unit:cf.unit||"g",
+      step:cf.unit==="g"?25:1, base:cf.unit==="g"?100:1,
+      kal:Number(cf.kal), pro:Number(cf.pro)||0, karb:Number(cf.karb)||0, yag:Number(cf.yag)||0,
+      cat:"özel", note:"Özel ürün"
+    };
+    setCustomFoods(prev=>[...prev,food]);
+    setCf({name:"",emoji:"🍽️",kal:"",pro:"",karb:"",yag:"",unit:"g"});
+    setShowCustomForm(false);
+    showToast("✅ "+food.name+" eklendi");
+  }
+  function saveTarget() {
+    setTarget({
+      kal:Number(editTarget.kal)||target.kal,
+      pro:Number(editTarget.pro)||target.pro,
+      karb:Number(editTarget.karb)||target.karb,
+      yag:Number(editTarget.yag)||target.yag
+    });
+    setShowTargetSheet(false);
+    showToast("🎯 Hedefler güncellendi");
+  }
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(()=>setToast(null),2500);
+  }
+  function shareDay() {
+    const today = new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long"});
+    let text = "📊 Günlük Beslenme — "+today+"\n"+"─".repeat(28)+"\n";
+    [0,1,2].forEach(i=>{
+      const items=entries[i]; if(!items.length) return;
+      const t=mealTotals(items);
+      text+="\n"+MEAL_NAMES[i]+" ("+t.kal+" kcal)\n";
+      items.forEach(e=>{
+        const n=calc(e.food,e.amt);
+        const vl=e.variantLabel?" ("+(e.variantLabel==="cig"?"çiğ":"pişmiş")+")":"";
+        text+="  "+e.food.emoji+" "+e.food.name+vl+" — "+e.amt+" "+e.food.unit+" · "+n.kal+" kcal\n";
+      });
+    });
+    if(totalBurn>0){
+      text+="\n🏃 Aktivite (-"+totalBurn+" kcal)\n";
+      ACTIVITIES.forEach((a,i)=>{ if(actAmts[i]>0) text+="  "+a.emoji+" "+a.name+" — "+actAmts[i]+" dk\n"; });
+    }
+    text+="\n"+"─".repeat(28)+"\nNet: "+netKal+" kcal | Hedef: "+target.kal+" kcal\nProtein: "+foodTotals.pro+"g / "+target.pro+"g";
+    const copy=(t)=>{
+      try {
+        navigator.clipboard.writeText(t).then(()=>showToast("📋 Panoya kopyalandı!")).catch(()=>{legacy(t)});
+      } catch(e){legacy(t);}
+    };
+    const legacy=(t)=>{
+      const el=document.createElement("textarea");
+      el.value=t;el.style.cssText="position:fixed;opacity:0";
+      document.body.appendChild(el);el.select();
+      try{document.execCommand("copy");showToast("📋 Panoya kopyalandı!");}catch(e){showToast("⚠️ Kopyalanamadı");}
+      document.body.removeChild(el);
+    };
+    if(navigator.share){navigator.share({text}).catch(()=>copy(text));}else{copy(text);}
+  }
+
+  const filteredFoods = allFoods.filter(f=>cat==="hepsi"||f.cat===cat);
+  const preview = sheet ? calc(sheet.food, amt) : null;
+  const curMealTotals = mealTotals(entries[tab]||[]);
+
+  return (
+    <div className="app">
+      <div className="strip">
+        <div className="ring-wrap">
+          <svg width="68" height="68" style={{transform:"rotate(-90deg)"}}>
+            <circle cx="34" cy="34" r={R} fill="none" stroke="#1a1a28" strokeWidth="6"/>
+            <circle cx="34" cy="34" r={R} fill="none" stroke="#c8ff00" strokeWidth="6"
+              strokeDasharray={CIRC} strokeDashoffset={CIRC*(1-calPct/100)}
+              strokeLinecap="round" style={{transition:"stroke-dashoffset .5s"}}/>
+          </svg>
+          <div className="ring-center">
+            <div className="ring-kcal">{netKal}</div>
+            <div className="ring-lbl">net kcal</div>
+          </div>
+        </div>
+        <div className="mbars">
+          {[{l:"PRO",v:foodTotals.pro,t:target.pro,c:"#ff6b6b"},{l:"KRB",v:foodTotals.karb,t:target.karb,c:"#5ba3ff"},{l:"YAĞ",v:foodTotals.yag,t:target.yag,c:"#ffb85d"}].map(m=>(
+            <div className="mrow" key={m.l}>
+              <div className="mlbl">{m.l}</div>
+              <div className="mtrack"><div className="mfill" style={{width:`${Math.min(100,(m.v/m.t)*100)}%`,background:m.c}}/></div>
+              <div className="mval" style={{color:m.c}}>{m.v}g<span style={{color:"var(--mut)"}}>/{m.t}</span></div>
+            </div>
+          ))}
+        </div>
+        <div className="strip-btns">
+          <button className="strip-btn" onClick={shareDay}><span>📤</span><span>Paylaş</span></button>
+          <button className="strip-btn" onClick={()=>{setEditTarget({...target});setShowTargetSheet(true);}}><span>🎯</span><span>Hedef</span></button>
+        </div>
+      </div>
+
+      <div className="tabs">
+        {[0,1,2].map(i=>{
+          const mt=mealTotals(entries[i]);
+          return (
+            <div key={i} className={"tab"+(tab===i?" on":"")} onClick={()=>setTab(i)}>
+              <span>{MEALS[i].split(" ")[0]}</span>
+              <span style={{fontSize:9,fontWeight:600}}>{MEALS[i].split(" ")[1]}</span>
+              <span className="tab-kcal" style={{color:mt.kal>0?"var(--acc)":"var(--mut)"}}>{mt.kal>0?mt.kal:"—"}</span>
+            </div>
+          );
+        })}
+        <div className={"tab"+(tab===3?" on":"")} onClick={()=>setTab(3)}>
+          <span>🏃</span><span style={{fontSize:9}}>Aktivite</span>
+          <span className="tab-kcal" style={{color:totalBurn>0?"#ff6b6b":"var(--mut)"}}>{totalBurn>0?"-"+totalBurn:"—"}</span>
+        </div>
+        <div className={"tab"+(tab===4?" on":"")} onClick={()=>setTab(4)}>
+          <span>📖</span><span style={{fontSize:9}}>Ref</span>
+          <span className="tab-kcal">—</span>
+        </div>
+      </div>
+
+      {tab===3 && (
+        <div className="sec">
+          {totalBurn>0 && (
+            <div className="act-total">
+              <div><div className="at-v">-{totalBurn} kcal</div><div className="at-l">toplam yakılan</div></div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--acc)"}}>{foodTotals.kal} - {totalBurn}</div>
+                <div style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"var(--acc)"}}>{netKal} net kcal</div>
+              </div>
+            </div>
+          )}
+          <div className="act-grid">
+            {ACTIVITIES.map((a,i)=>(
+              <div className="act-card" key={a.name}>
+                <div className="act-top">
+                  <div className="act-emoji">{a.emoji}</div>
+                  <div><div className="act-name">{a.name}</div><div className="act-note">{a.note}</div></div>
+                </div>
+                <div className="act-row">
+                  <button className="act-btn" onClick={()=>setActAmts(p=>({...p,[i]:Math.max(0,(p[i]||0)-5)}))}>−</button>
+                  <input className="act-input" type="number" min="0" value={actAmts[i]||0}
+                    onChange={e=>setActAmts(p=>({...p,[i]:Math.max(0,Number(e.target.value))}))}/>
+                  <button className="act-btn" onClick={()=>setActAmts(p=>({...p,[i]:(p[i]||0)+5}))}>+</button>
+                  <div className="act-unit">{a.unit}</div>
+                </div>
+                {actAmts[i]>0 && <div className="act-burn">-{Math.round(a.perUnit*actAmts[i])} kcal yakıldı</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab===4 && (
+        <div className="ref-list">
+          {DEFAULT_FOODS.map((f,i)=>{
+            const open=openRef===i;
+            const display=resolveFood(f,"pismis");
+            const tot=display.pro+display.karb+display.yag||1;
+            return (
+              <div className="ref-card" key={f.name}>
+                <div className="ref-header" onClick={()=>setOpenRef(open?null:i)}>
+                  <div className="ref-left">
+                    <div className="ref-emoji">{f.emoji}</div>
+                    <div>
+                      <div className="ref-name">{f.name}</div>
+                      <div className="ref-unit">{f.variants?"çiğ / pişmiş":"1 "+display.unit+" başına"}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <div className="ref-kcal">{display.kal} kcal</div>
+                    <div style={{color:"var(--mut)",fontSize:14,transform:open?"rotate(180deg)":"none",transition:"transform .2s"}}>▾</div>
+                  </div>
+                </div>
+                <div className="ref-bar">
+                  <div style={{display:"flex",height:4,borderRadius:2,overflow:"hidden",gap:1}}>
+                    <div style={{width:`${(display.pro/tot)*100}%`,background:"#ff6b6b"}}/>
+                    <div style={{width:`${(display.karb/tot)*100}%`,background:"#5ba3ff"}}/>
+                    <div style={{width:`${(display.yag/tot)*100}%`,background:"#ffb85d"}}/>
+                  </div>
+                </div>
+                {open && (
+                  <>
+                    <div className="divider"/>
+                    {f.variants ? (
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,padding:"10px 14px"}}>
+                        {Object.entries(f.variants).map(([k,v])=>(
+                          <div key={k} style={{background:"var(--bg)",borderRadius:8,padding:"8px 10px"}}>
+                            <div style={{fontFamily:"var(--mono)",fontSize:9,color:"#5ba3ff",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>
+                              {k==="cig"?"Çiğ (100g)":"Pişmiş (1 "+v.unit+")"}
+                            </div>
+                            <div style={{fontFamily:"var(--mono)",fontSize:11,color:"var(--text)"}}>
+                              {v.kal} kcal · P:{v.pro}g · K:{v.karb}g
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="ref-detail">
+                        {[{v:display.pro+"g",l:"Protein",c:"#ff6b6b"},{v:display.karb+"g",l:"Karb",c:"#5ba3ff"},{v:display.yag+"g",l:"Yağ",c:"#ffb85d"}].map(x=>(
+                          <div className="rd-box" key={x.l}>
+                            <div className="rd-v" style={{color:x.c}}>{x.v}</div>
+                            <div className="rd-l">{x.l}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="ref-note">💡 {display.note}</div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab<3 && (
+        <div className="sec">
+          {entries[tab].length>0 && (
+            <div className="meal-summary">
+              <div><div className="ms-kcal">{curMealTotals.kal} kcal</div><div className="ms-label">{MEAL_NAMES[tab]} toplam</div></div>
+              <div className="ms-macros">
+                {[{v:curMealTotals.pro,l:"pro",c:"#ff6b6b"},{v:curMealTotals.karb,l:"krb",c:"#5ba3ff"},{v:curMealTotals.yag,l:"yağ",c:"#ffb85d"}].map(m=>(
+                  <div className="ms-m" key={m.l}><div className="ms-v" style={{color:m.c}}>{m.v}g</div><div className="ms-l">{m.l}</div></div>
+                ))}
+              </div>
+            </div>
+          )}
+          {entries[tab].length>0 && (
+            <div className="added-list">
+              {entries[tab].map(e=>{
+                const n=calc(e.food,e.amt);
+                return (
+                  <div className="added-row" key={e.id}>
+                    <div className="added-emoji">{e.food.emoji}</div>
+                    <div className="added-info">
+                      <div className="added-name">{e.food.name}{e.variantLabel?" ("+(e.variantLabel==="cig"?"çiğ":"pişmiş")+")":""}</div>
+                      <div className="added-sub">P:{n.pro}g · K:{n.karb}g · {e.amt} {e.food.unit}</div>
+                    </div>
+                    <div className="added-kal">{n.kal}</div>
+                    <button className="del-btn" onClick={()=>removeEntry(tab,e.id)}>×</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {entries[tab].length===0 && <div className="empty">Henüz eklenmedi</div>}
+
+          <div className="qa-label">Ekle</div>
+          {showCustomForm ? (
+            <div className="custom-form">
+              <div className="cf-title">+ Özel Ürün Ekle</div>
+              <div className="cf-row">
+                <input className="cf-input" placeholder="İsim *" value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/>
+                <input className="cf-input" placeholder="Emoji" value={cf.emoji} onChange={e=>setCf(p=>({...p,emoji:e.target.value}))} style={{textAlign:"center",fontSize:18}}/>
+              </div>
+              <div className="cf-row">
+                <input className="cf-input" type="number" placeholder="Kalori *" value={cf.kal} onChange={e=>setCf(p=>({...p,kal:e.target.value}))}/>
+                <select className="cf-input" value={cf.unit} onChange={e=>setCf(p=>({...p,unit:e.target.value}))}>
+                  <option value="g">gram (100g baz)</option>
+                  <option value="adet">adet</option>
+                  <option value="porsiyon">porsiyon</option>
+                  <option value="dilim">dilim</option>
+                  <option value="servis">servis</option>
+                </select>
+              </div>
+              <div className="cf-row">
+                <input className="cf-input" type="number" step="0.1" placeholder="Protein (g)" value={cf.pro} onChange={e=>setCf(p=>({...p,pro:e.target.value}))}/>
+                <input className="cf-input" type="number" step="0.1" placeholder="Karb (g)" value={cf.karb} onChange={e=>setCf(p=>({...p,karb:e.target.value}))}/>
+              </div>
+              <input className="cf-input" type="number" step="0.1" placeholder="Yağ (g)" value={cf.yag} onChange={e=>setCf(p=>({...p,yag:e.target.value}))}/>
+              <button className="cf-save" onClick={saveCustomFood}>KAYDET</button>
+              <button className="cf-cancel" onClick={()=>setShowCustomForm(false)}>İptal</button>
+            </div>
+          ) : (
+            <button className="add-custom-btn" onClick={()=>setShowCustomForm(true)}>+ Özel ürün ekle</button>
+          )}
+
+          <div className="cat-row">
+            {CATS.map(c=>(
+              <div key={c} className={"cat-chip"+(cat===c?" on":"")} onClick={()=>setCat(c)}>
+                {c.charAt(0).toUpperCase()+c.slice(1)}
+              </div>
+            ))}
+          </div>
+          <div className="food-grid">
+            {filteredFoods.map((f,idx)=>{
+              const d=resolveFood(f,"pismis");
+              return (
+                <div className="food-btn" key={f.name+idx} onClick={()=>openSheet(f)}>
+                  <div className="fb-emoji">{f.emoji}</div>
+                  <div className="fb-info">
+                    <div className="fb-name">{f.name}</div>
+                    <div className="fb-kal">{d.kal} kcal</div>
+                    <div className="fb-unit">/ 1 {d.unit}</div>
+                    {f.variants && <div className="fb-var">çiğ / pişmiş</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {sheet && (
+        <div className="sheet-overlay" onClick={e=>e.target===e.currentTarget&&setSheet(null)}>
+          <div className="sheet">
+            <div className="sh-handle"/>
+            <div className="sh-food">
+              <div className="sh-emoji">{sheet.rawFood.emoji}</div>
+              <div><div className="sh-name">{sheet.rawFood.name}</div><div className="sh-note">{sheet.food.note}</div></div>
+            </div>
+            {sheet.rawFood.variants && (
+              <div className="variant-row">
+                <button className={"var-btn"+(sheet.variant==="pismis"?" on":"")} onClick={()=>switchVariant("pismis")}>🍳 Pişmiş</button>
+                <button className={"var-btn"+(sheet.variant==="cig"?" on":"")} onClick={()=>switchVariant("cig")}>🌿 Çiğ</button>
+              </div>
+            )}
+            <div className="amt-row">
+              <button className="amt-btn" onClick={()=>setAmt(a=>Math.max(sheet.food.step,a-sheet.food.step))}>−</button>
+              <input className="amt-val" type="number" value={amt} onChange={e=>setAmt(Number(e.target.value))} min={1}/>
+              <button className="amt-btn" onClick={()=>setAmt(a=>a+sheet.food.step)}>+</button>
+              <div className="amt-unit">{sheet.food.unit}</div>
+            </div>
+            {preview && (
+              <div className="prev-row">
+                {[{v:preview.kal,l:"kcal"},{v:preview.pro+"g",l:"protein"},{v:preview.karb+"g",l:"karb"},{v:preview.yag+"g",l:"yağ"}].map(p=>(
+                  <div className="prev-box" key={p.l}><div className="prev-v">{p.v}</div><div className="prev-l">{p.l}</div></div>
+                ))}
+              </div>
+            )}
+            <button className="sh-add" onClick={addEntry}>EKLE +</button>
+          </div>
+        </div>
+      )}
+
+      {showTargetSheet && (
+        <div className="sheet-overlay" onClick={e=>e.target===e.currentTarget&&setShowTargetSheet(false)}>
+          <div className="sheet target-sheet">
+            <div className="sh-handle"/>
+            <div className="ts-title">Hedef Değerler</div>
+            <div className="ts-sub">Değerleri güncelleyince barlar anında değişir</div>
+            <div className="ts-grid">
+              {[{key:"kal",label:"Kalori (kcal)",color:"var(--acc)"},{key:"pro",label:"Protein (g)",color:"#ff6b6b"},{key:"karb",label:"Karb (g)",color:"#5ba3ff"},{key:"yag",label:"Yağ (g)",color:"#ffb85d"}].map(f=>(
+                <div className="ts-field" key={f.key}>
+                  <div className="ts-label" style={{color:f.color}}>{f.label}</div>
+                  <input className="ts-input" style={{borderColor:editTarget[f.key]!==target[f.key]?f.color:"var(--brd)",color:f.color}}
+                    type="number" value={editTarget[f.key]}
+                    onChange={e=>setEditTarget(p=>({...p,[f.key]:e.target.value}))}/>
+                </div>
+              ))}
+            </div>
+            <button className="ts-save" onClick={saveTarget}>KAYDET</button>
+            <button className="ts-cancel" onClick={()=>setShowTargetSheet(false)}>İptal</button>
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
+</script>
+</body>
+</html>
