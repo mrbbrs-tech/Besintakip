@@ -146,7 +146,25 @@ body{background:var(--bg)}
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState } = React;
+const { useState, useEffect } = React;
+
+function useLS(key, init) {
+  const [val, setVal] = useState(() => {
+    try {
+      const s = localStorage.getItem(key);
+      return s ? JSON.parse(s) : init;
+    } catch(e) { return init; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }, [key, val]);
+  return [val, setVal];
+}
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
 
 const INIT_TARGET = { kal: 1900, pro: 115, karb: 110, yag: 60 };
 
@@ -201,6 +219,8 @@ const DEFAULT_FOODS = [
   { name: "Muz", emoji: "🍌", unit: "adet", step: 1, base: 1, kal: 89, pro: 1.1, karb: 23, yag: 0.3, cat: "meyve", note: "1 orta boy ≈ 100g" },
   { name: "Elma", emoji: "🍎", unit: "adet", step: 1, base: 1, kal: 72, pro: 0.4, karb: 19, yag: 0.2, cat: "meyve", note: "1 orta boy" },
   { name: "Zeytinyağı", emoji: "🫒", unit: "kaşık", step: 1, base: 1, kal: 119, pro: 0, karb: 0, yag: 14, cat: "yağ", note: "1 yemek kaşığı ≈ 13g" },
+  { name: "Tam Buğday Lavaş", emoji: "🫓", unit: "adet", step: 1, base: 1, kal: 260, pro: 8.2, karb: 32.9, yag: 5.5, cat: "karb", note: "Urtad Premium, 1 adet = 70g" },
+  { name: "Beyaz Peynir", emoji: "🧀", unit: "g", step: 25, base: 100, kal: 264, pro: 17, karb: 1.5, yag: 21, cat: "süt", note: "100g başına" },
 ];
 
 const ACTIVITIES = [
@@ -235,16 +255,33 @@ function mealTotals(items) {
 }
 
 function App() {
-  const [target, setTarget] = useState(INIT_TARGET);
+  const [target, setTarget] = useLS("kt_target", INIT_TARGET);
   const [tab, setTab] = useState(0);
-  const [entries, setEntries] = useState({0:[],1:[],2:[]});
-  const [actAmts, setActAmts] = useState({0:0,1:0,2:0,3:0});
+  // Entries: günlük — gün değişince otomatik sıfırla
+  const [entriesData, setEntriesData] = useLS("kt_entries", {day: todayKey(), data: {0:[],1:[],2:[]}});
+  const entries = entriesData.day === todayKey() ? entriesData.data : {0:[],1:[],2:[]};
+  function setEntries(updater) {
+    setEntriesData(prev => {
+      const cur = prev.day === todayKey() ? prev.data : {0:[],1:[],2:[]};
+      const next = typeof updater === "function" ? updater(cur) : updater;
+      return { day: todayKey(), data: next };
+    });
+  }
+  const [actData, setActData] = useLS("kt_acts", {day: todayKey(), data: {0:0,1:0,2:0,3:0}});
+  const actAmts = actData.day === todayKey() ? actData.data : {0:0,1:0,2:0,3:0};
+  function setActAmts(updater) {
+    setActData(prev => {
+      const cur = prev.day === todayKey() ? prev.data : {0:0,1:0,2:0,3:0};
+      const next = typeof updater === "function" ? updater(cur) : updater;
+      return { day: todayKey(), data: next };
+    });
+  }
   const [sheet, setSheet] = useState(null);
   const [amt, setAmt] = useState(1);
   const [cat, setCat] = useState("hepsi");
   const [openRef, setOpenRef] = useState(null);
   const [toast, setToast] = useState(null);
-  const [customFoods, setCustomFoods] = useState([]);
+  const [customFoods, setCustomFoods] = useLS("kt_custom", []);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [cf, setCf] = useState({name:"",emoji:"🍽️",kal:"",pro:"",karb:"",yag:"",unit:"g"});
   const [showTargetSheet, setShowTargetSheet] = useState(false);
