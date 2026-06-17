@@ -12,7 +12,7 @@
 :root{
   --bg:#0e0e14;--s1:#14141e;--s2:#1a1a28;--brd:#22223a;
   --acc:#c8ff00;--text:#f0ede6;--mut:#5a5a7a;
-  --pro:#ff6b6b;--karb:#5ba3ff;--yag:#ffb85d;--lif:#4dd0c4;
+  --pro:#ff6b6b;--karb:#5ba3ff;--yag:#ffb85d;--lif:#4dd0c4;--su:#48cae4;
   --mono:'DM Mono',monospace;
 }
 html,body{background:var(--bg)}
@@ -29,6 +29,7 @@ html,body{background:var(--bg)}
 .mtrack{flex:1;height:4px;background:var(--s2);border-radius:2px;overflow:hidden}
 .mfill{height:100%;border-radius:2px;transition:width .3s}
 .mval{font-family:var(--mono);font-size:9px;width:54px;text-align:right;flex-shrink:0}
+.mwater-btn{width:18px;height:18px;border-radius:5px;background:var(--s2);border:1px solid var(--brd);color:var(--text);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-weight:700;line-height:1;padding:0}
 .strip-btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
 .strip-btn{background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;padding:6px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
 .strip-btn:active{border-color:var(--acc)}
@@ -116,7 +117,7 @@ html,body{background:var(--bg)}
 
 .sumcard{background:var(--s1);border:1px solid var(--brd);border-radius:14px;padding:16px;margin-bottom:14px}
 .sumcard-title{font-family:var(--mono);font-size:10px;color:var(--mut);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
-.sum-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px}
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
 .sum-box{background:var(--s2);border-radius:10px;padding:9px 4px;text-align:center}
 .sum-v{font-family:'Bebas Neue',sans-serif;font-size:16px}
 .sum-l{font-family:var(--mono);font-size:8px;color:var(--mut);text-transform:uppercase}
@@ -138,7 +139,7 @@ html,body{background:var(--bg)}
 
 /* ============================= VERİ ============================= */
 
-var TARGET_DEFAULT = { kal: 1900, pro: 115, karb: 110, yag: 60, lif: 25 };
+var TARGET_DEFAULT = { kal: 1900, pro: 115, karb: 110, yag: 60, lif: 25, su: 3000 };
 
 var FOODS = [
   /* PROTEİN */
@@ -264,6 +265,13 @@ function getActs() {
 }
 function setActs(data) { saveJSON("bt_acts", { day: todayKey(), data: data }); }
 
+function getWater() {
+  var raw = loadJSON("bt_water", { day: todayKey(), ml: 0 });
+  if (raw.day !== todayKey()) return 0;
+  return raw.ml;
+}
+function setWater(ml) { saveJSON("bt_water", { day: todayKey(), ml: ml }); }
+
 /* ============================= UI STATE ============================= */
 
 var ui = {
@@ -380,6 +388,16 @@ function renderStrip() {
       '<div class="mtrack"><div class="mfill" style="width:' + w + '%;background:' + r.c + '"></div></div>' +
       '<div class="mval" style="color:' + r.c + '">' + r.v + 'g<span style="color:var(--mut)">/' + r.t + '</span></div></div>';
   });
+
+  var water = getWater();
+  var waterTarget = target.su || 3000;
+  var wPct = Math.min(100, (water / waterTarget) * 100);
+  barsHtml += '<div class="mrow"><div class="mlbl">💧</div>' +
+    '<div class="mtrack"><div class="mfill" style="width:' + wPct + '%;background:var(--su)"></div></div>' +
+    '<div class="mval" style="color:var(--su)">' + water + '<span style="color:var(--mut)">/' + waterTarget + 'ml</span></div>' +
+    '<button class="mwater-btn" onclick="changeWater(-250)" style="margin-left:4px">−</button>' +
+    '<button class="mwater-btn" onclick="changeWater(250)" style="margin-left:3px">+</button>' +
+    '</div>';
 
   return '<div class="strip">' +
     '<div class="ring-wrap"><svg width="72" height="72" style="transform:rotate(-90deg)">' +
@@ -540,8 +558,9 @@ function renderSummaryTab() {
     '<div class="sum-box"><div class="sum-v" style="color:var(--karb)">' + ft.karb + 'g</div><div class="sum-l">karb</div></div>' +
     '<div class="sum-box"><div class="sum-v" style="color:var(--yag)">' + ft.yag + 'g</div><div class="sum-l">yağ</div></div>' +
     '<div class="sum-box"><div class="sum-v" style="color:var(--lif)">' + ft.lif + 'g</div><div class="sum-l">lif</div></div>' +
+    '<div class="sum-box"><div class="sum-v" style="color:var(--su)">' + getWater() + '</div><div class="sum-l">su (ml)</div></div>' +
     '</div>' +
-    '<div style="font-family:var(--mono);font-size:10px;color:var(--mut);text-align:center;margin-top:6px">Hedef: ' + target.kal + ' kcal · ' + target.pro + 'g P · ' + target.karb + 'g K · ' + target.yag + 'g Y · ' + target.lif + 'g Lif</div>' +
+    '<div style="font-family:var(--mono);font-size:10px;color:var(--mut);text-align:center;margin-top:6px">Hedef: ' + target.kal + ' kcal · ' + target.pro + 'g P · ' + target.karb + 'g K · ' + target.yag + 'g Y · ' + target.lif + 'g Lif · ' + (target.su||3000) + 'ml Su</div>' +
     '</div>';
 
   html += '<div class="sumcard"><div class="sumcard-title">Öğünler</div>';
@@ -608,7 +627,8 @@ function renderTargetSheet() {
     { key:"pro", label:"Protein (g)", color:"var(--pro)" },
     { key:"karb", label:"Karb (g)", color:"var(--karb)" },
     { key:"yag", label:"Yağ (g)", color:"var(--yag)" },
-    { key:"lif", label:"Lif (g)", color:"var(--lif)" }
+    { key:"lif", label:"Lif (g)", color:"var(--lif)" },
+    { key:"su", label:"Su (ml)", color:"var(--su)" }
   ];
   var html = '<div class="sheet-overlay" onclick="if(event.target===this)closeTargetSheet()"><div class="sheet"><div class="sh-handle"></div>' +
     '<div style="font-family:\'Bebas Neue\';font-size:20px;letter-spacing:2px;color:var(--acc);margin-bottom:4px">Hedef Değerler</div>' +
@@ -702,6 +722,13 @@ function setAct(i, val) {
   render();
 }
 
+function changeWater(delta) {
+  var ml = getWater();
+  ml = Math.max(0, ml + delta);
+  setWater(ml);
+  render();
+}
+
 function openCustomForm() { ui.customFormOpen = true; render(); }
 function closeCustomForm() { ui.customFormOpen = false; render(); }
 
@@ -736,7 +763,7 @@ function closeTargetSheet() { ui.targetSheetOpen = false; render(); }
 
 function saveTargetValues() {
   var t = getTarget();
-  ["kal","pro","karb","yag","lif"].forEach(function(k) {
+  ["kal","pro","karb","yag","lif","su"].forEach(function(k) {
     var el = document.getElementById("target-" + k);
     var val = Number(el.value);
     if (!isNaN(val) && val > 0) t[k] = val;
@@ -778,7 +805,7 @@ function shareDay() {
       if (acts[i] > 0) text += "  " + a.emoji + " " + a.name + " — " + acts[i] + " dk\n";
     });
   }
-  text += "\n────────────────────────────\nNet: " + net + " kcal | Hedef: " + target.kal + " kcal\nProtein: " + ft.pro + "g / " + target.pro + "g\nKarb: " + ft.karb + "g / " + target.karb + "g\nYağ: " + ft.yag + "g / " + target.yag + "g\nLif: " + ft.lif + "g / " + target.lif + "g";
+  text += "\n────────────────────────────\nNet: " + net + " kcal | Hedef: " + target.kal + " kcal\nProtein: " + ft.pro + "g / " + target.pro + "g\nKarb: " + ft.karb + "g / " + target.karb + "g\nYağ: " + ft.yag + "g / " + target.yag + "g\nLif: " + ft.lif + "g / " + target.lif + "g\n💧 Su: " + getWater() + "ml / " + (target.su||3000) + "ml";
 
   function legacyCopy(t) {
     try {
