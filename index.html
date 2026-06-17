@@ -145,6 +145,14 @@ body{background:var(--bg)}
 </head>
 <body>
 <div id="root"></div>
+<script>
+window.addEventListener('error', function(e) {
+  var root = document.getElementById('root');
+  if (root && !root.innerHTML.trim()) {
+    root.innerHTML = '<div style="background:#1a0000;color:#ff6b6b;font-family:monospace;font-size:13px;padding:20px;min-height:100vh;white-space:pre-wrap;word-break:break-word"><b>⚠️ Script hatası:</b>\n' + (e.message || e) + '\n\nDosya: ' + (e.filename||'') + ' Satır: ' + (e.lineno||'') + '</div>';
+  }
+});
+</script>
 <script type="text/babel">
 const { useState, useEffect } = React;
 
@@ -675,8 +683,25 @@ function App() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{background:"#1a0000",color:"#ff6b6b",fontFamily:"monospace",fontSize:13,padding:20,minHeight:"100vh"}}>
+          <div style={{fontWeight:700,fontSize:16,marginBottom:10}}>⚠️ Bir hata oluştu</div>
+          <div style={{whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{String(this.state.error && this.state.error.message || this.state.error)}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+root.render(<ErrorBoundary><App/></ErrorBoundary>);
+
 </script>
 </body>
 </html>
