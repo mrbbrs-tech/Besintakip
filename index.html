@@ -94,6 +94,12 @@ html,body{background:var(--bg)}
 .cf-input{background:var(--s2);border:1px solid var(--brd);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;outline:none;width:100%}
 .cf-save{padding:12px;background:#5ba3ff;color:#0e0e14;border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer}
 .cf-cancel{padding:9px;background:transparent;border:none;color:var(--mut);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;text-align:center}
+.cf-list-row{display:flex;align-items:center;gap:8px;background:var(--s2);border-radius:10px;padding:9px 12px;margin-bottom:6px}
+.cf-list-info{flex:1;min-width:0}
+.cf-list-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-list-sub{font-family:var(--mono);font-size:9px;color:var(--mut);margin-top:2px}
+.cf-list-btn{background:none;border:1px solid var(--brd);border-radius:7px;color:var(--mut);font-size:12px;cursor:pointer;padding:5px 8px;white-space:nowrap;flex-shrink:0}
+.cf-list-btn.del{border-color:#ff6b6b44;color:#ff6b6b}
 
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:flex-end}
 .sheet{background:var(--s1);border-radius:20px 20px 0 0;width:100%;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto}
@@ -210,7 +216,21 @@ var FOODS = [
   { name:"Zeytinyağı", emoji:"🫒", unit:"yemek kaşığı", step:1, base:1, kal:90, pro:0, karb:0, yag:10, lif:0, cat:"meyvesebze", note:"1 yemek kaşığı ≈ 10ml" },
   { name:"Filtre Kahve / Sade Soda", emoji:"☕", unit:"fincan/şişe", step:1, base:1, kal:2, pro:0.1, karb:0, yag:0, lif:0, cat:"meyvesebze", note:"Sade, kalorisiz" },
   { name:"Pre-Workout", emoji:"⚡", unit:"servis", step:1, base:1, kal:15, pro:0, karb:1.5, yag:0, lif:0, cat:"meyvesebze", note:"1 servis/ölçek ≈ 10g" },
-  { name:"Sade Kahve (Filtre / Türk Kahvesi)", emoji:"☕", unit:"bardak", step:1, base:1, kal:2, pro:0.2, karb:0, yag:0, lif:0, cat:"meyvesebze", note:"1 bardak/kupa ≈ 250ml" }
+  { name:"Sade Kahve (Filtre / Türk Kahvesi)", emoji:"☕", unit:"bardak", step:1, base:1, kal:2, pro:0.2, karb:0, yag:0, lif:0, cat:"meyvesebze", note:"1 bardak/kupa ≈ 250ml" },
+  { name:"Kreatin", emoji:"🤙", unit:"servis", step:1, base:1, kal:0, pro:0, karb:0, yag:0, lif:0, cat:"meyvesebze", note:"1 servis ≈ 3-5g, kalorisiz" },
+
+  /* ET / DÖNER */
+  { name:"Et Döner", emoji:"🥙", unit:"porsiyon", step:1, base:1, kal:315, pro:31.5, karb:0, yag:18, lif:0, cat:"protein", note:"1 porsiyon ≈ 150g çiğden pişmiş" },
+  { name:"Tavuk Döner", emoji:"🐓", unit:"porsiyon", step:1, base:1, kal:220, pro:33, karb:0, yag:9, lif:0, cat:"protein", note:"1 porsiyon ≈ 150g" },
+
+  /* EV YEMEKLERİ */
+  { name:"Beyaz Ekmek", emoji:"🥖", unit:"dilim", step:1, base:1, kal:70, pro:2.1, karb:15, yag:0.5, lif:0.8, cat:"evyemekleri", note:"1 dilim ≈ 30g" },
+  { name:"Lahmacun", emoji:"🫓", unit:"adet", step:1, base:1, kal:250, pro:12, karb:27.5, yag:8, lif:2, cat:"evyemekleri", note:"1 adet" },
+  { name:"Bezelye Yemeği", emoji:"🫛", unit:"porsiyon", step:1, base:1, kal:250, pro:16, karb:18, yag:9, lif:6, cat:"evyemekleri", note:"1 porsiyon" },
+  { name:"Kabak Yemeği (Bulgurlu)", emoji:"🎃", unit:"porsiyon", step:1, base:1, kal:90, pro:1.8, karb:14, yag:3, lif:2.2, cat:"evyemekleri", note:"1 porsiyon ≈ 5 yemek kaşığı" },
+  { name:"Barbunya Pilaki", emoji:"🍽️", unit:"yemek kaşığı", step:1, base:1, kal:36, pro:1.7, karb:5, yag:0.8, lif:1.8, cat:"evyemekleri", note:"1 yemek kaşığı" },
+  { name:"Taze Fasulye", emoji:"🫛", unit:"porsiyon", step:1, base:1, kal:75, pro:1.2, karb:6.8, yag:3, lif:2.8, cat:"evyemekleri", note:"1 porsiyon ≈ 5 yemek kaşığı" },
+  { name:"Mercimek Çorbası", emoji:"🍜", unit:"kase", step:1, base:1, kal:140, pro:7.2, karb:14, yag:4, lif:5, cat:"evyemekleri", note:"1 kase" }
 ];
 
 var ACTIVITIES = [
@@ -227,6 +247,7 @@ var CATS = [
   { key:"karb", label:"Karbonhidrat" },
   { key:"sut", label:"Süt Ürünleri" },
   { key:"meyvesebze", label:"Meyve/Sebze" },
+  { key:"evyemekleri", label:"Ev Yemekleri" },
   { key:"özel", label:"Özel" }
 ];
 var CUSTOM_UNITS = ["g","adet","porsiyon","dilim","servis","bardak","kaşık","yemek kaşığı","tatlı kaşığı","KK","kase"];
@@ -280,6 +301,8 @@ var ui = {
   sheet: null,
   targetSheetOpen: false,
   customFormOpen: false,
+  customListOpen: false,
+  editCustomIdx: null,   // null = yeni ekle, number = düzenle
   toast: null
 };
 
@@ -463,7 +486,10 @@ function renderMealTab() {
   html += '<div class="qa-label">Ekle</div>';
 
   if (ui.customFormOpen) html += renderCustomForm();
-  else html += '<button class="add-custom-btn" onclick="openCustomForm()">+ Özel ürün ekle</button>';
+  else {
+    html += '<button class="add-custom-btn" onclick="openCustomForm()">+ Yeni özel ürün ekle</button>';
+    html += renderCustomList();
+  }
 
   html += '<div class="cat-row">';
   CATS.forEach(function(c) {
@@ -489,28 +515,55 @@ function renderMealTab() {
 }
 
 function renderCustomForm() {
+  var isEdit = ui.editCustomIdx !== null;
+  var existing = isEdit ? getCustomFoods()[ui.editCustomIdx] : null;
   var opts = "";
-  CUSTOM_UNITS.forEach(function(u) { opts += '<option value="' + u + '">' + u + (u==="g"?" (100g baz)":"") + '</option>'; });
+  CUSTOM_UNITS.forEach(function(u) { opts += '<option value="' + u + '"' + (existing && existing.unit===u?' selected':'') + '>' + u + (u==="g"?" (100g baz)":"") + '</option>'; });
   return '<div class="custom-form">' +
-    '<div class="cf-title">+ Özel Ürün Ekle</div>' +
+    '<div class="cf-title">' + (isEdit ? '✏️ Ürün Düzenle' : '+ Yeni Özel Ürün') + '</div>' +
     '<div class="cf-row">' +
-    '<input class="cf-input" id="cf-name" placeholder="İsim *">' +
-    '<input class="cf-input" id="cf-emoji" placeholder="Emoji" value="🍽️" style="text-align:center;font-size:18px">' +
+    '<input class="cf-input" id="cf-name" placeholder="İsim *" value="' + (existing?esc(existing.name):'') + '">' +
+    '<input class="cf-input" id="cf-emoji" placeholder="Emoji" value="' + (existing?esc(existing.emoji):'🍽️') + '" style="text-align:center;font-size:18px">' +
     '</div>' +
     '<div class="cf-row">' +
-    '<input class="cf-input" id="cf-kal" type="number" placeholder="Kalori *">' +
+    '<input class="cf-input" id="cf-kal" type="number" placeholder="Kalori *" value="' + (existing?existing.kal:'') + '">' +
     '<select class="cf-input" id="cf-unit">' + opts + '</select></div>' +
     '<div class="cf-row">' +
-    '<input class="cf-input" id="cf-pro" type="number" step="0.1" placeholder="Protein (g)">' +
-    '<input class="cf-input" id="cf-karb" type="number" step="0.1" placeholder="Karb (g)">' +
+    '<input class="cf-input" id="cf-pro" type="number" step="0.1" placeholder="Protein (g)" value="' + (existing?existing.pro:'') + '">' +
+    '<input class="cf-input" id="cf-karb" type="number" step="0.1" placeholder="Karb (g)" value="' + (existing?existing.karb:'') + '">' +
     '</div>' +
     '<div class="cf-row">' +
-    '<input class="cf-input" id="cf-yag" type="number" step="0.1" placeholder="Yağ (g)">' +
-    '<input class="cf-input" id="cf-lif" type="number" step="0.1" placeholder="Lif (g)">' +
+    '<input class="cf-input" id="cf-yag" type="number" step="0.1" placeholder="Yağ (g)" value="' + (existing?existing.yag:'') + '">' +
+    '<input class="cf-input" id="cf-lif" type="number" step="0.1" placeholder="Lif (g)" value="' + (existing?existing.lif:'') + '">' +
     '</div>' +
-    '<button class="cf-save" onclick="saveCustomFood()">KAYDET</button>' +
+    '<button class="cf-save" onclick="saveCustomFood()">' + (isEdit?'GÜNCELLE':'KAYDET') + '</button>' +
     '<button class="cf-cancel" onclick="closeCustomForm()">İptal</button>' +
     '</div>';
+}
+
+function renderCustomList() {
+  var customs = getCustomFoods();
+  if (customs.length === 0) return '';
+  var html = '<div class="custom-form" style="border-color:#5ba3ff22">' +
+    '<div class="cf-title" style="display:flex;justify-content:space-between;align-items:center">' +
+    '<span>📋 Özel Ürünlerim (' + customs.length + ')</span>' +
+    '<button class="cf-list-btn" onclick="toggleCustomList()" style="font-size:11px">' + (ui.customListOpen?'Gizle ▴':'Göster ▾') + '</button>' +
+    '</div>';
+  if (ui.customListOpen) {
+    customs.forEach(function(f, i) {
+      html += '<div class="cf-list-row">' +
+        '<div style="font-size:16px;flex-shrink:0">' + f.emoji + '</div>' +
+        '<div class="cf-list-info">' +
+        '<div class="cf-list-name">' + esc(f.name) + '</div>' +
+        '<div class="cf-list-sub">' + f.kal + ' kcal · P:' + f.pro + 'g · K:' + f.karb + 'g · Y:' + f.yag + 'g · Lif:' + f.lif + 'g</div>' +
+        '</div>' +
+        '<button class="cf-list-btn" onclick="editCustomFood(' + i + ')" style="margin-right:4px">✏️</button>' +
+        '<button class="cf-list-btn del" onclick="deleteCustomFood(' + i + ')">🗑️</button>' +
+        '</div>';
+    });
+  }
+  html += '</div>';
+  return html;
 }
 
 function renderActivityTab() {
@@ -729,8 +782,9 @@ function changeWater(delta) {
   render();
 }
 
-function openCustomForm() { ui.customFormOpen = true; render(); }
-function closeCustomForm() { ui.customFormOpen = false; render(); }
+function openCustomForm() { ui.customFormOpen = true; ui.editCustomIdx = null; render(); }
+function closeCustomForm() { ui.customFormOpen = false; ui.editCustomIdx = null; render(); }
+function toggleCustomList() { ui.customListOpen = !ui.customListOpen; render(); }
 
 function saveCustomFood() {
   var name = document.getElementById("cf-name").value.trim();
@@ -752,10 +806,30 @@ function saveCustomFood() {
     note: "Özel ürün"
   };
   var customs = getCustomFoods();
-  customs.push(food);
+  if (ui.editCustomIdx !== null) {
+    customs[ui.editCustomIdx] = food;
+    showToast("✅ " + name + " güncellendi");
+  } else {
+    customs.push(food);
+    showToast("✅ " + name + " eklendi");
+  }
   setCustomFoods(customs);
   ui.customFormOpen = false;
-  showToast("✅ " + name + " eklendi");
+  ui.editCustomIdx = null;
+}
+
+function editCustomFood(idx) {
+  ui.editCustomIdx = idx;
+  ui.customFormOpen = true;
+  render();
+}
+
+function deleteCustomFood(idx) {
+  var customs = getCustomFoods();
+  var name = customs[idx] ? customs[idx].name : "Ürün";
+  customs.splice(idx, 1);
+  setCustomFoods(customs);
+  showToast("🗑️ " + name + " silindi");
 }
 
 function openTargetSheet() { ui.targetSheetOpen = true; render(); }
